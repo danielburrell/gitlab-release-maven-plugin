@@ -1,0 +1,13 @@
+{
+  "name": "New release",
+  "tag_name": "v0.3",
+  "description": "Super nice release",
+  "assets": {
+    "links": [
+      {
+        "name": "hoge",
+        "url": "https://google.com"
+      }
+    ]
+  }
+}
