@@ -1,11 +1,14 @@
 # Quickstart
 
-gitlab-release-maven-plugin lets you upload artifacts to gitlab and have them shown in the release section as part of your standard deployment workflow.
+gitlab-release-maven-plugin lets you attach artifacts to a gitlab release as part of a standard maven release process.
 
-To use the plugin, go to your `settings.xml` (usually in `~/.m2/settings.xml`)
+The following quick start shows you how to integrate the plugin so that `mvn release:clean release:prepare release:perform` creates the release and attaches binary artefacts to the release section.
 
-Edit the file and add the following servers snippet
+## Prerequisites
+In gitlab, you will need to create a personal access token and store this in your settings.xml file as shown below.
 
+ - Go to your `settings.xml` (usually in `~/.m2/settings.xml`)
+ - Edit the file and add the following servers snippet
 
 ```xml
 <settings>
@@ -30,14 +33,13 @@ Configure your `maven-release-plugin` to invoke `deploy gitlab-release:gitlab-re
     <artifactId>maven-release-plugin</artifactId>
     <version>2.5.3</version>
     <configuration>
-        <!--updateDependencies>false</updateDependencies-->
         <checkModificationExcludes>
             <checkModificationExclude>pom.xml</checkModificationExclude>
         </checkModificationExcludes>
         <autoVersionSubmodules>true</autoVersionSubmodules>
         <useReleaseProfile>false</useReleaseProfile>
         <releaseProfiles>release</releaseProfiles>
-        <goals>deploy gitlab-release:gitlab-release</goals>
+        <goals>deploy gitlab-release:gitlab-release</goals> <!-- this is the important bit if you want to invoke gitlab-release plugin during mvn release:perform -->
     </configuration>
 </plugin>
 ```
@@ -48,7 +50,7 @@ Then configure the `gitlab-release-maven-plugin` using the following snippet, su
 <plugin>
     <groupId>uk.co.solong</groupId>
     <artifactId>gitlab-release-maven-plugin</artifactId>
-    <version>1.4</version>
+    <version>1.0</version>
     <configuration>
         <repo>myrepo</repo> <!-- This is the name of the repo https://mygitlab.solong.co.uk/myuser/myrepo -->
         <owner>myuser</owner> <!-- This is the name of the owner https://mygitlab.solong.co.uk/myuser/myrepo -->
@@ -56,7 +58,7 @@ Then configure the `gitlab-release-maven-plugin` using the following snippet, su
         <tag>${project.artifactId}-${project.version}</tag> <!-- an example tag format -->
         <artifacts>
             <artifact>
-                <file>${build.directory}/testattach-${project.version}.jar</file>  <!-- the artifact to attach -->
+                <file>${build.directory}/my-artefact-${project.version}.jar</file>  <!-- the artifact to attach -->
                 <label>something</label> <!-- the display text for the link -->
             </artifact>
             <artifact>
