@@ -239,11 +239,7 @@
 <!--            <groupId>commons-logging</groupId>-->
 <!--            <artifactId>commons-logging</artifactId>-->
 <!--        </dependency>-->
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>4.5</version><!--$NO-MVN-MAN-VER$ -->
-        </dependency>
+
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpmime</artifactId>
@@ -279,9 +275,9 @@
         </dependencies>
     </dependencyManagement>
     <scm>
-        <connection>scm:git:git@gitlab.com:danielburrell/gitlab-release-maven-plugin.git</connection>
-        <url>scm:git:git@gitlab.com:danielburrell/gitlab-release-maven-plugin.git</url>
-        <developerConnection>scm:git:git@gitlab.com:danielburrell/gitlab-release-maven-plugin.git</developerConnection>
+        <connection>scm:git:git@github.com:danielburrell/gitlab-release-maven-plugin.git</connection>
+        <url>scm:git:git@github.com:danielburrell/gitlab-release-maven-plugin.git</url>
+        <developerConnection>scm:git:git@github.com:danielburrell/gitlab-release-maven-plugin.git</developerConnection>
         <tag>gitlab-release-maven-plugin-1.1</tag>
     </scm>
 </project>
