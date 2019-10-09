@@ -82,7 +82,7 @@ public class GitLabRelease extends AbstractMojo {
             Link l = new Link();
             l.setName(a.getLabel());
 
-            l.setUrl(baseUrl+owner+"/"+repo+"/"+uploadFileResponse.getUrl());
+            l.setUrl(baseUrl+"/"+owner+"/"+repo+uploadFileResponse.getUrl());
             getLog().info("URL:"+l.getUrl());
             links.add(l);
         }
