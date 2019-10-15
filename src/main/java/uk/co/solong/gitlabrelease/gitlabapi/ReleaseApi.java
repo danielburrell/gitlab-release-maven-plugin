@@ -35,11 +35,11 @@ public class ReleaseApi {
     }
 
     //GET https://BASE_URL/api/v4/projects/danbur1%2Fgitlabapi
-    public GetProjectIdResponse getProjectIdFromOwnerAndRepo(String owner, String repo) {
+    public GetProjectIdResponse getProjectIdFromOwnerAndRepo(String pathToRepo) {
 
         RestTemplate r = new RestTemplate();
         Map<String, String> urlParams = new HashMap<>();
-        urlParams.put("encoded_repo", owner + "/" + repo);
+        urlParams.put("encoded_repo", pathToRepo);
 
         MultiValueMap<String, String> headers = new HttpHeaders();
         headers.put("PRIVATE-TOKEN", Collections.singletonList(token));

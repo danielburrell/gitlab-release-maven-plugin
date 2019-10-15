@@ -35,10 +35,6 @@ public class GitLabRelease extends AbstractMojo {
     @Parameter(defaultValue = "")
     private String serverId;
 
-    private String owner;
-
-    private String repo;
-
     @Parameter(defaultValue = "${project}", readonly = true, required = true)
     private MavenProject project;
 
@@ -60,6 +56,7 @@ public class GitLabRelease extends AbstractMojo {
 
     //populated by init()
     private String scmDeveloperConnection;
+    private String pathToRepo;
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
@@ -90,7 +87,7 @@ public class GitLabRelease extends AbstractMojo {
 
     private void go() {
         ReleaseApi api = new ReleaseApi(baseUrl, token, getLog());
-        GetProjectIdResponse projectIdFromOwnerAndRepo = api.getProjectIdFromOwnerAndRepo(owner, repo);
+        GetProjectIdResponse projectIdFromOwnerAndRepo = api.getProjectIdFromOwnerAndRepo(pathToRepo);
 
         CreateReleaseRequest createReleaseRequest = new CreateReleaseRequest();
         Assets assets = new Assets();
@@ -101,7 +98,7 @@ public class GitLabRelease extends AbstractMojo {
             Link l = new Link();
             l.setName(a.getLabel());
 
-            l.setUrl(baseUrl+"/"+owner+"/"+repo+uploadFileResponse.getUrl());
+            l.setUrl(baseUrl+"/"+pathToRepo+uploadFileResponse.getUrl());
             getLog().info("URL:"+l.getUrl());
             links.add(l);
         }
@@ -127,7 +124,7 @@ public class GitLabRelease extends AbstractMojo {
 
         //scm:git:git@solong.co.uk:owner/project.git
 
-        String pattern = "scm:\\w+:\\w+@([\\w+\\.]+):(\\w+)\\/(\\w+)\\.git";
+        String pattern = "scm:\\w+:\\w+@([\\w+\\.\\_\\-0-9]*):([a-zA-z\\/_\\-0-9]*)\\.git";
         Pattern r = Pattern.compile(pattern);
 
         // Now create matcher object.
@@ -136,19 +133,16 @@ public class GitLabRelease extends AbstractMojo {
         if (m.find()) {
             getLog().info("Discovered gitlab domain from SCM: https://"+m.group(1));
             baseUrl="https://"+m.group(1);
-            getLog().info("Discovered gitlab owner from SCM: "+m.group(2));
-            owner=m.group(2);
-            getLog().info("Discovered gitlab repository from SCM: "+m.group(3));
-            repo=m.group(3);
+            getLog().info("Discovered gitlab path from SCM: "+m.group(2));
+            pathToRepo=m.group(2);
+
         } else {
+            getLog().error("Unable to parse SCM String: " + scmDeveloperConnection);
             throw new MojoExecutionException("Could not parse scm information. Ensure scm developerconnection tag is in format: `scm:git:git@gitlabdomain.org:owner/repo.git`");
         }
 
-        if (StringUtils.isEmpty(repo)) {
-            throw new MojoExecutionException("repo could not be derived from scm developerConnection tag. Check the developerConnection format is `scm:git:git@gitlabdomain.org:owner/repo.git`");
-        }
-        if (StringUtils.isEmpty(owner)) {
-            throw new MojoExecutionException("owner could not be derived from scm developerConnection tag. Check the developerConnection format is `scm:git:git@gitlabdomain.org:owner/repo.git`");
+        if (StringUtils.isEmpty(pathToRepo)) {
+            throw new MojoExecutionException("path to repo could not be derived from scm developerConnection tag. Check the developerConnection format is `scm:git:git@gitlabdomain.org:path/torepo.git`");
         }
         if (StringUtils.isEmpty(baseUrl)) {
             throw new MojoExecutionException("baseUrl could not be derived from scm developerConnection tag. Check the developerConnection format is `scm:git:git@baseurl.org:owner/repo.git`");

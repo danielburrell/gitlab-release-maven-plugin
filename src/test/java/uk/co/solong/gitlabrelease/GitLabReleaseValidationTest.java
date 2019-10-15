@@ -28,6 +28,54 @@ public class GitLabReleaseValidationTest {
         r.validate();
     }
 
+    @Test
+    public void shouldValidateHyphen() throws MojoExecutionException {
+        GitLabRelease r = new GitLabRelease();
+        r.setScmDeveloperConnection("scm:git:git@solong.co.uk:owner-something/project.git");
+        r.setServerId("exampleId");
+        List<Artifact> artifacts = new ArrayList<>();
+        r.setArtifacts(artifacts);
+        Settings settings = new Settings();
+        Server server = new Server();
+        server.setPrivateKey("sampleKey");
+        server.setId("exampleId");
+        settings.addServer(server);
+        r.setSettings(settings);
+        r.validate();
+    }
+
+    @Test
+    public void shouldValidateUnderScore() throws MojoExecutionException {
+        GitLabRelease r = new GitLabRelease();
+        r.setScmDeveloperConnection("scm:git:git@solong.co.uk:something_else/project.git");
+        r.setServerId("exampleId");
+        List<Artifact> artifacts = new ArrayList<>();
+        r.setArtifacts(artifacts);
+        Settings settings = new Settings();
+        Server server = new Server();
+        server.setPrivateKey("sampleKey");
+        server.setId("exampleId");
+        settings.addServer(server);
+        r.setSettings(settings);
+        r.validate();
+    }
+
+    @Test
+    public void shouldValidateMulti() throws MojoExecutionException {
+        GitLabRelease r = new GitLabRelease();
+        r.setScmDeveloperConnection("scm:git:git@solong.co.uk:owner-something/something_else/project.git");
+        r.setServerId("exampleId");
+        List<Artifact> artifacts = new ArrayList<>();
+        r.setArtifacts(artifacts);
+        Settings settings = new Settings();
+        Server server = new Server();
+        server.setPrivateKey("sampleKey");
+        server.setId("exampleId");
+        settings.addServer(server);
+        r.setSettings(settings);
+        r.validate();
+    }
+
     @Test(expected = MojoExecutionException.class)
     public void shouldFailToFindServer() throws MojoExecutionException {
         GitLabRelease r = new GitLabRelease();
