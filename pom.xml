@@ -11,7 +11,7 @@
     <groupId>uk.co.solong</groupId>
     <artifactId>gitlab-release-maven-plugin</artifactId>
     <packaging>maven-plugin</packaging>
-    <version>1.4</version>
+    <version>1.5-SNAPSHOT</version>
 
     <name>gitlab Release Maven Plugin</name>
     <description>A maven plugin for publishing artifacts to gitlab releases</description>
@@ -278,6 +278,6 @@
         <connection>scm:git:git@github.com:danielburrell/gitlab-release-maven-plugin.git</connection>
         <url>scm:git:git@github.com:danielburrell/gitlab-release-maven-plugin.git</url>
         <developerConnection>scm:git:git@github.com:danielburrell/gitlab-release-maven-plugin.git</developerConnection>
-        <tag>gitlab-release-maven-plugin-1.4</tag>
+        <tag>gitlab-release-maven-plugin-1.1</tag>
     </scm>
 </project>
