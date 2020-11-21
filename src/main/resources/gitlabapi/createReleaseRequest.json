@@ -6,7 +6,8 @@
     "links": [
       {
         "name": "hoge",
-        "url": "https://google.com"
+        "url": "https://google.com",
+        "link_type": "other"
       }
     ]
   }

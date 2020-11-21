@@ -64,12 +64,25 @@ Then configure the `gitlab-release-maven-plugin` using the following snippet, su
             <artifact>
                 <file>${build.directory}/my-artefact-${project.version}.jar</file>  <!-- the artifact to attach -->
                 <label>something</label> <!-- the display text for the link -->
+                <linkType>other</linkType> <!-- The type of the link: other, runbook, image, package. -->
             </artifact>
             <artifact>
                 <file>${build.directory}/different-${project.version}.jar</file>  <!-- another artifact to attach -->
                 <label>something else</label> <!-- the display text for the link -->
+                <linkType>package</linkType> <!-- The type of the link: other, runbook, image, package. -->
             </artifact>
         </artifacts>
+        <packages>
+            <package>
+                <label>artifact download</label> <!-- the display text for the link -->
+                <type>maven</type>
+                <packageName>uk/co/solong/artifactId</packageName>
+                <version>1.0</version>
+                <tag>artifactId-1.0</tag>
+                <filename>artifactId-1.0.tar.gz</filename>
+                <match>EXACT</match> <!-- EXACT, FIRST, SKIP; fails for anything other than a single exact match-->
+            </package>
+        </packages>
     </configuration>
 </plugin>
 ```

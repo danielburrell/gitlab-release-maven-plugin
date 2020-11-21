@@ -1,10 +1,8 @@
 package uk.co.solong.gitlabrelease.gitlabapi;
 
-import co.uk.solong.gitlabapi.pojo.CreateReleaseRequest;
-import co.uk.solong.gitlabapi.pojo.CreateReleaseResponse;
-import co.uk.solong.gitlabapi.pojo.GetProjectIdResponse;
-import co.uk.solong.gitlabapi.pojo.UploadFileResponse;
+import co.uk.solong.gitlabapi.pojo.*;
 import org.apache.maven.plugin.logging.Log;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.*;
 import org.springframework.util.LinkedMultiValueMap;
@@ -17,12 +15,16 @@ import uk.co.solong.gitlabrelease.Artifact;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 public class ReleaseApi {
 
     private final String API_BASE;
     private static final String CREATE_URL = "/projects/{id}/releases";
+    private static final String PACKAGES_URL = "/projects/{id}/packages?package_type={package_type}&package_name={package_name}&page={page}";
     private static final String GET_RELEASE_BY_TAG_URL = "/projects/{encoded_repo}";
     private static final String UPLOAD_URL = "/projects/{id}/uploads";
     private final String token;
@@ -107,4 +109,6 @@ public class ReleaseApi {
         FileSystemResource f = new FileSystemResource(a.getFile());
         return f;
     }
+
+
 }

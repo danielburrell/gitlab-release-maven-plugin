@@ -10,18 +10,25 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.settings.Settings;
 import org.springframework.util.StringUtils;
+import uk.co.solong.gitlabrelease.gitlabapi.PackagesApi;
 import uk.co.solong.gitlabrelease.gitlabapi.ReleaseApi;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Mojo(name = "gitlab-release", defaultPhase = LifecyclePhase.DEPLOY)
 public class GitLabRelease extends AbstractMojo {
 
     @Parameter
     private List<Artifact> artifacts;
+
+    @Parameter
+    private List<Package> packages;
 
     @Parameter(defaultValue = "${project.version} release")
     private String description;
@@ -92,16 +99,28 @@ public class GitLabRelease extends AbstractMojo {
         CreateReleaseRequest createReleaseRequest = new CreateReleaseRequest();
         Assets assets = new Assets();
         List<Link> links = new ArrayList<>();
+
+        getLog().info("Linking packages");
+        for (Package currentPackage : packages) {
+            Link l = new Link();
+            l.setName(currentPackage.getLabel());
+            l.setLinkType("package");
+            l.setUrl(deriveUrlFromFacts(baseUrl, projectIdFromOwnerAndRepo.getId(), currentPackage, pathToRepo));
+            getLog().info("URL:"+l.getUrl());
+            links.add(l);
+        }
+
         getLog().info("Adding artifacts");
         for (Artifact a : artifacts) {
             UploadFileResponse uploadFileResponse = api.uploadFileToProjectId(a, projectIdFromOwnerAndRepo.getId());
             Link l = new Link();
             l.setName(a.getLabel());
-
+            l.setLinkType(a.getLinkType());
             l.setUrl(baseUrl+"/"+pathToRepo+uploadFileResponse.getUrl());
             getLog().info("URL:"+l.getUrl());
             links.add(l);
         }
+
         assets.setLinks(links);
         createReleaseRequest.setAssets(assets);
         createReleaseRequest.setDescription(description);
@@ -109,6 +128,34 @@ public class GitLabRelease extends AbstractMojo {
         createReleaseRequest.setTagName(tag);
 
         CreateReleaseResponse release = api.createRelease(projectIdFromOwnerAndRepo.getId(), createReleaseRequest, getLog());
+    }
+
+    private String deriveUrlFromFacts(String baseUrl, Integer id, Package currentPackage, String pathToRepo) {
+        //lookup the packages for the given projectId. GET /projects/:id/packages?package_type=maven&package_name=name
+        PackagesApi api = new PackagesApi(baseUrl, token, getLog());
+
+        Stream<ListPackagesResponse> listPackagesResponse = api.listPackagesForProject(id, currentPackage.getType(), currentPackage.getPackageName());
+        List<ListPackagesResponse> packages = listPackagesResponse.filter(x -> x.getVersion().equals(currentPackage.getVersion())).collect(Collectors.toList());
+        Integer packageId = packages.get(0).getId();
+        Stream<ListPackageFilesResponse> filesInPackage = api.listFilesForPackage(id, packageId);
+        Optional<Integer> fileId = filesInPackage.filter(x -> x.getFileName().equals(currentPackage.getFilename())).map(ListPackageFilesResponse::getId).findFirst();
+
+        //filter out packages with the given currentPackage criteria
+        //act according to the package mode and select 1.
+        //given a selected package, get the files for the package.
+        //find the file according to the package, and capture the fileId
+        //generate a url based on the captured info
+        //domain.com/name/space/project-name/-/package_files/:fileId/download
+
+        String url = String.join("/", new String[]{
+                baseUrl,
+                pathToRepo,
+                "-",
+                "package_files",
+                fileId.get().toString(),
+                "download"
+        });
+        return url;
     }
 
     public String getScmDeveloperConnection() {

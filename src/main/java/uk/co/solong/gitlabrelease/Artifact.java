@@ -3,10 +3,12 @@ package uk.co.solong.gitlabrelease;
 public class Artifact {
     private String file;
     private String label;
+    private String linkType;
 
-    public Artifact(String file, String label) {
+    public Artifact(String file, String label, String linkType) {
         this.file = file;
         this.label = label;
+        this.linkType = linkType;
     }
 
     public Artifact() {
@@ -26,5 +28,13 @@ public class Artifact {
 
     public void setFile(String file) {
         this.file = file;
+    }
+
+    public String getLinkType() {
+        return linkType;
+    }
+
+    public void setLinkType(String linkType) {
+        this.linkType = linkType;
     }
 }
