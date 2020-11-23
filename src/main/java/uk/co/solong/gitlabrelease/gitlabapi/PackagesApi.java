@@ -27,7 +27,7 @@ public class PackagesApi {
 
     private final String API_BASE;
     private static final String PACKAGES_URL = "/projects/{id}/packages?package_type={package_type}&package_name={package_name}&page={page}";
-    private static final String PACKAGE_FILES_URL = "/projects/{id}/packages/{package_id}/package_files";
+    private static final String PACKAGE_FILES_URL = "/projects/{id}/packages/{package_id}/package_files?page={page}";
 
     private final String token;
     private final Log log;
@@ -61,8 +61,8 @@ public class PackagesApi {
         }
     }
 
-    public Stream<ListPackagesResponse> listPackagesForProject(Integer id, String type, String packageName) {
-        Function<Integer, List<ListPackagesResponse>> apiCall = page -> getPageOfPackagesForProject(id, type, packageName, page);
+    public Stream<ListPackagesResponse> listPackagesForProject(Integer projectId, String type, String packageName) {
+        Function<Integer, List<ListPackagesResponse>> apiCall = page -> getPageOfPackagesForProject(projectId, type, packageName, page);
         return pageApiCall(apiCall);
     }
 
@@ -71,20 +71,20 @@ public class PackagesApi {
         return pageApiCall(apiCall);
     }
 
-    private <O> Stream<O> pageApiCall(Function<Integer, List<O>> apiCall) {
-        AbstractSpliterator<O> packageSupplier = new AbstractSpliterator<O>(Long.MAX_VALUE, NONNULL) {
-            private List<O> currentSupplySet = new ArrayList<>();
+    private <Out> Stream<Out> pageApiCall(Function<Integer, List<Out>> apiCall) {
+        AbstractSpliterator<Out> packageSupplier = new AbstractSpliterator<Out>(Long.MAX_VALUE, NONNULL) {
+            private List<Out> currentSupplySet = new ArrayList<>();
             private int page = 1;
             private int index = 0;
-            private Function<Integer, List<O>> supplySet = apiCall;
+            private Function<Integer, List<Out>> supplySet = apiCall;
 
             @Override
-            public boolean tryAdvance(Consumer<? super O> action) {
-                if (index < currentSupplySet.size()) {
+            public boolean tryAdvance(Consumer<? super Out> action) {
+                if (index == currentSupplySet.size()) {
                     //end of the current list, get more supplies.
                     currentSupplySet = supplySet.apply(page++);
                     index = 0; //start reading from index 0 again.
-                    if (currentSupplySet.size() > 0) {
+                    if (!currentSupplySet.isEmpty()) {
                         //if there are more elements to pull
                         action.accept(currentSupplySet.get(index++));
                         return true;

@@ -10,6 +10,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.settings.Settings;
 import org.springframework.util.StringUtils;
+import uk.co.solong.gitlabrelease.exceptions.NoSuchPackageInGitlabPackageRegistryException;
 import uk.co.solong.gitlabrelease.gitlabapi.PackagesApi;
 import uk.co.solong.gitlabrelease.gitlabapi.ReleaseApi;
 
@@ -92,7 +93,7 @@ public class GitLabRelease extends AbstractMojo {
         }
     }
 
-    private void go() {
+    private void go() throws MultipleArtifactsFoundException, NoSuchFileInPackageInGitlabPackageRegistryException, NoSuchPackageInGitlabPackageRegistryException, MultipleFilesFoundInPackageException {
         ReleaseApi api = new ReleaseApi(baseUrl, token, getLog());
         GetProjectIdResponse projectIdFromOwnerAndRepo = api.getProjectIdFromOwnerAndRepo(pathToRepo);
 
@@ -130,32 +131,52 @@ public class GitLabRelease extends AbstractMojo {
         CreateReleaseResponse release = api.createRelease(projectIdFromOwnerAndRepo.getId(), createReleaseRequest, getLog());
     }
 
-    private String deriveUrlFromFacts(String baseUrl, Integer id, Package currentPackage, String pathToRepo) {
+    private String deriveUrlFromFacts(String baseUrl, Integer projectId, Package currentPackage, String pathToRepo) throws NoSuchPackageInGitlabPackageRegistryException, MultipleArtifactsFoundException, NoSuchFileInPackageInGitlabPackageRegistryException, MultipleFilesFoundInPackageException {
         //lookup the packages for the given projectId. GET /projects/:id/packages?package_type=maven&package_name=name
         PackagesApi api = new PackagesApi(baseUrl, token, getLog());
 
-        Stream<ListPackagesResponse> listPackagesResponse = api.listPackagesForProject(id, currentPackage.getType(), currentPackage.getPackageName());
-        List<ListPackagesResponse> packages = listPackagesResponse.filter(x -> x.getVersion().equals(currentPackage.getVersion())).collect(Collectors.toList());
+        Stream<ListPackagesResponse> listPackagesResponse = api.listPackagesForProject(projectId, currentPackage.getType(), currentPackage.getPackageName());
+        List<ListPackagesResponse> packages = listPackagesResponse
+                .peek(x -> getLog().info(String.join(":",x.getName(), x.getVersion(), x.getId().toString())))
+                .filter(x -> x.getVersion().equals(currentPackage.getVersion()))
+                .collect(Collectors.toList());
+        //can't link to a package that cannot be found
+        if (packages.isEmpty()) {
+            throw new NoSuchPackageInGitlabPackageRegistryException("Could not find "+currentPackage.getType()+" package "+currentPackage.getPackageName()+" with version "+currentPackage.getVersion());
+        }
+        //if there's multiple packages and the user says there shouldn't be.
+        if (currentPackage.getMatch().equals("EXACT") && packages.size() > 1) {
+            throw new MultipleArtifactsFoundException("Found multiple "+currentPackage.getType()+" package artifacts for criteria "+currentPackage.getPackageName()+" with version "+currentPackage.getVersion()+" but match is set to EXACT");
+        }
+        //grab the first (and perhaps only) package.
         Integer packageId = packages.get(0).getId();
-        Stream<ListPackageFilesResponse> filesInPackage = api.listFilesForPackage(id, packageId);
-        Optional<Integer> fileId = filesInPackage.filter(x -> x.getFileName().equals(currentPackage.getFilename())).map(ListPackageFilesResponse::getId).findFirst();
+        Stream<ListPackageFilesResponse> filesInPackage = api.listFilesForPackage(projectId, packageId);
+        List<Integer> fileIds = filesInPackage
+                .peek(x -> getLog().info(String.join(":", x.getFileName(), x.getCreatedAt(), x.getId().toString())))
+                .filter(x -> x.getFileName().equals(currentPackage.getFilename()))
+                .map(ListPackageFilesResponse::getId)
+                .collect(Collectors.toList());
 
-        //filter out packages with the given currentPackage criteria
-        //act according to the package mode and select 1.
-        //given a selected package, get the files for the package.
-        //find the file according to the package, and capture the fileId
-        //generate a url based on the captured info
+        if (fileIds.isEmpty()) {
+            throw new NoSuchFileInPackageInGitlabPackageRegistryException("Could not find filename "+currentPackage.getFilename()+ " in package");
+        }
+
+        if (currentPackage.getMatch().equals("EXACT") && fileIds.size() > 1) {
+            throw new MultipleFilesFoundInPackageException("Match is strict but package contains multiple files with filename "+currentPackage.getFilename());
+        }
+
         //domain.com/name/space/project-name/-/package_files/:fileId/download
 
         String url = String.join("/", new String[]{
-                baseUrl,
-                pathToRepo,
-                "-",
-                "package_files",
-                fileId.get().toString(),
-                "download"
+                baseUrl,     //   notrailingslash.com
+                pathToRepo, //   path/to/repo
+                "-",          // ok
+                "package_files",      // ok
+                fileIds.get(0).toString(),  //  1
+                "download"      // ok
         });
         return url;
+
     }
 
     public String getScmDeveloperConnection() {
@@ -211,8 +232,14 @@ public class GitLabRelease extends AbstractMojo {
                 }
             }
         }
+        if (artifacts == null && packages == null) {
+            throw new MojoExecutionException("either <packages> or <artifacts> tag must be present");
+        }
         if (artifacts == null) {
-            throw new MojoExecutionException("<artifacts> tag must be present");
+            artifacts = new ArrayList<>();
+        }
+        if (packages == null) {
+            packages = new ArrayList<>();
         }
         for (Artifact a : artifacts) {
             if (StringUtils.isEmpty(a.getFile())) {
