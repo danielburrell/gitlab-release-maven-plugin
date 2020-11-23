@@ -31,15 +31,10 @@
         </developer>
     </developers>
     <distributionManagement>
-<!--        <snapshotRepository>-->
-<!--            <id>ossrh</id>-->
-<!--            <name>Sonatype Nexus snapshot repository</name>-->
-<!--            <url>https://oss.sonatype.org/content/repositories/snapshots</url>-->
-<!--        </snapshotRepository>-->
         <snapshotRepository>
-            <id>github</id>
-            <name>github snapshot repository</name>
-            <url>https://maven.pkg.github.com/danielburrell/gitlab-release-maven-plugin</url>
+            <id>ossrh</id>
+            <name>Sonatype Nexus snapshot repository</name>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
         </snapshotRepository>
     </distributionManagement>
     <properties>
